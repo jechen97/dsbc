@@ -79,7 +79,8 @@ for i in range(len(str_inverse_g)):  # outer array separated by addition, inner 
         x.append(str_inverse_g[i].split('*'))
 
     else:
-        x.append(str_inverse_g[i])
+        temp_list = [str_inverse_g[i]]
+        x.append(temp_list)
 print(x)
 
 x_int = [[0 for i in range(len(x[j]))] for j in range(len(x))]  # new array to store indices of n
@@ -88,25 +89,13 @@ print(x_int)
 
 """change 3 spaces to 1 if just 1 string"""
 
-for i in range(len(x)):
-    
-
-
-
-
 for i in range(len(x)):     # store indices in new matrix/array x_int
     for j in range(len(x[i])):
-        if not x[i][j] == '1':
-            if not len(x[i]) == 1:
-                turn_to_string = str(x[i][j])
-                #print(turn_to_string, len(x[i]))
-                x_int[i][j] = int(turn_to_string[2])
-            else:
-                turn_to_string = str(x[i])
-                #print(turn_to_string, len(x[i]))
-                x_int[i] = int(turn_to_string[2])
-        else:
-            x_int[i][j] = -1    # indicator for value 1
+        if x[i][j] == '1':
+            x_int[i][j] = -1 # indicator for value 1
+            continue
+        element_str_list = x[i][j].split('_')
+        x_int[i][j] = int(element_str_list[1])
 
 print("integer x: " + str(x_int))
 
