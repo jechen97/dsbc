@@ -1,54 +1,27 @@
 import math
 import sympy
+import random
 
-def calc_pn(n=[]):
-    """ Calculate period of basic Ducci sequence
 
-    :param n: length of tuple in Ducci sequence
-    :return: return P(n)
-    """
+def calc_pn(n):
     n1 = len(n)
-    prime_factors = []
+    phi_n = sympy.totient(n1)
 
-    while n1 % 2 == 0:
-        prime_factors.append(2)
-        n1 = n1 / 2
+    for i in range(1, phi_n+1):
+        myk = (2**i)%n1
+        if myk == 1:
+            ord_2 = i
 
-    for i in range(3, int(math.sqrt(n1)) + 1, 2):
-        while n1 % i == 0:
-            prime_factors.append(i)
-            n1 = int(n1 / i)
+    a = ord_2/2
 
-    if n1 > 2:
-        prime_factors.append(n1)
+    myk2 = (2**a)%n1
+    if myk2 == n1-1:
+        pn = n1*(2**a - 1)
 
-    if len(n) % 2 == 1:
-        """Calculate phi(n)"""
-        phi_n = len(n)
-        used_primes = []
-        for i in range(len(prime_factors)):
-            if prime_factors[i] not in used_primes:
-                phi_n = phi_n * (1 - 1 / prime_factors[i])
-                used_primes.append(prime_factors[i])
-        phi_n = int(phi_n)
+    else:
+        pn = 2**a - 1
 
-        """Find m(n) where 2**m(n) = 1 mod n"""
-        for i in range(2, phi_n + 1):  # eulers totient formula
-            if phi_n % i == 0 and 2 ** i % len(n) == 1:
-                # print("order of 2: " + str(i))
-                order_two = i
-
-        """Calculate period of basic ducci sequence"""
-        a = order_two / 2
-        if 2 ** a % len(n) == len(n) - 1:
-            # print("with -1")
-            p_n = int(len(n) * (2 ** a - 1))
-
-        else:
-            # print("without -1")
-            p_n = int(2 ** order_two - 1)
-
-    return (p_n)
+    return pn
 
 
 def ducci(tuple=[]):
@@ -57,12 +30,12 @@ def ducci(tuple=[]):
     :param tuple: array/vector/n-tuple
     """
 
-    x = tuple[0]
+    x = tuple[0]  # hold value of first position
     y = tuple[len(tuple) - 1]
     for i in range(len(tuple) - 1):
         tuple[i] = abs(tuple[i] - tuple[i + 1])
     tuple[len(tuple) - 1] = abs(x - y)
-
+    return tuple
 
 def repducci(n, tuple=[]):
     """n ducci iterations
@@ -71,16 +44,19 @@ def repducci(n, tuple=[]):
     """
 
     for i in range(n):
-        ducci(tuple)
-    return (tuple)
+        tuple = ducci(tuple)
+    return tuple
 
 
 def ducci_poly1(tuple=[]):
-    """Multiply by (1+x)
+    """Multiply by (1+x) in F_2
     
-    """  # same as one ducci iteration: (a_0, ..., a_{n-1}) -> a_{n-1} + a_{n-1}x + ... + a_0 x^{n-1}
+    """  # same as one ducci iteration:
+    # (a_0, ..., a_{n-1}) -> a_{n-1} + a_{n-1}x + ... + a_0 x^{n-1}
 
-    g = [0] * len(tuple)  # g will be multiplying the polynomial by just x ie shifting coefficients lefts
+    g = [0] * len(tuple)
+    # g will be multiplying the polynomial
+    # by just x ie shifting coefficients lefts
     for i in range(len(tuple) - 1):
         g[i] = tuple[i + 1]
     g[len(tuple) - 1] = tuple[0]
@@ -91,7 +67,7 @@ def ducci_poly1(tuple=[]):
         else:
             tuple[i] = 1
 
-    return (tuple)
+    return tuple
 
 
 def ducci_poly_n(n, tuple=[]):
@@ -101,7 +77,16 @@ def ducci_poly_n(n, tuple=[]):
     """
     for i in range(n):
         ducci_poly1(tuple)
-    return (tuple)
+    return tuple
+
+
+def ducci_poly_n_ver2(n, tuple):
+    x1 = [0](*len(tuple)-2)
+    x1.append(1)
+    x1.append(1)
+    print(x1)
+    return poly_mult(tuple, poly_power(n, x1))
+
 
 
 def leftshift(tuple=[]):
@@ -111,7 +96,7 @@ def leftshift(tuple=[]):
     for i in range(len(tuple) - 1):
         tuple[i] = tuple[i + 1]
     tuple[len(tuple) - 1] = a_0
-    return (tuple)
+    return tuple
 
 
 def mysum(n=[]):  # quicker than python sum
@@ -120,7 +105,7 @@ def mysum(n=[]):  # quicker than python sum
     a = 0
     for i in range(len(n)):
         a += n[i]
-    return (a)
+    return a
 
 
 def poly_mult(f=[], g=[]):
@@ -145,7 +130,11 @@ def poly_mult(f=[], g=[]):
         else:
             fg[i] = 1
 
-    return (fg)
+    if mysum(fg) == len(fg) - 1 and fg[len(fg) - 1] == 0:
+        fg = [0] * (len(fg) - 1)
+        fg.append(1)
+
+    return fg
 
 
 def poly_power(power, f):
@@ -156,26 +145,27 @@ def poly_power(power, f):
     """
 
     g = list(f)
-    for i in range(power-1):
-        g = poly_mult(f, g)
-    return (g)
+    if power == 0:
+        g = [0] * len(f)
+        g[len(g) - 1] = 1
+
+    if power > 0:
+        for i in range(int(power - 1)):
+            g = poly_mult(f, g)
+    return g
 
 
-def led_deg(f=[]):
-    """find leading degree of polynomial f"""
-    l_deg = 0
+def lead_deg(f):
     for i in range(len(f)):
         if f[i] == 1:
-            l_deg = len(f) - 1 - i
-            break
-
-    return l_deg
+            deg = len(f) - 1 - i
+            return deg
 
 
 def deg_dif(f=[], g=[]):
     """find difference in leading degree"""
 
-    return abs(led_deg(f) - led_deg(g))
+    return lead_deg(f) - lead_deg(g)
 
 
 def poly_add(f=[], g=[]):
@@ -191,95 +181,221 @@ def poly_add(f=[], g=[]):
     return result
 
 
-def invert_poly(f=[]):
-    """Inverse polynomials in F_2[x]/<x^{n-1}+...+1> by Euclidean algorithm"""
+def rightshift(tuple):
+    """
+    shifts tuple one element to the right, same thing as multiplying by x^-1
+    :param tuple:
+    :return:
+    """
+    last = tuple[len(tuple) - 1]
+    for i in range(len(tuple) - 1):
+        tuple[len(tuple) - 1 - i] = tuple[len(tuple) - 2 - i]
+    tuple[0] = last
+    return tuple
 
-    mod = [1] * len(f)
 
-    mat = [mod, f]  # set up remainder matrix where first two rows are f, g
-    mat_mult = []  # matrix to store what we multiply by
+def multiple_right_shift(tuple, n):
+    """does n right shifts"""
+    for i in range(n):
+        rightshift(tuple)
+    return tuple
 
-    last_coeff = (mat[len(mat) - 1][len(f) - 1])
-    sum_coeff = mysum(mat[len(mat) - 1])
 
-    while not (last_coeff == 1 and sum_coeff == 1):
-        f = mat[len(mat) - 1]
-        g = mat[len(mat) - 2]
+def multiple_left_shift(tuple, n):
+    """does n left shifts"""
+    for i in range(n):
+        leftshift(tuple)
+    return tuple
 
-        last_coeff = (mat[len(mat) - 1][len(f) - 1])  # checks remainder equal to 1
-        sum_coeff = mysum(mat[len(mat) - 1])
 
-        if last_coeff == 1 and sum_coeff == 1:  # stops process before appending additional remainder
-            break
+def quotient(a, b):
+    """ simple quotient with result x to power difference in degree
 
-        h = [0] * len(f)
-        h[len(h) - 1 - deg_dif(f, g)] = 1  # difference in degree of f,g
-        # could be refined to include polynomial besides x^n such as (1+x)
-        mat_mult.append(h)
+    :param a: polynomial in array form
+    :param b: polynomial of degree less than or equal to a
+    :return:
+    """
+    quot = lead_deg(a) - lead_deg(b)
 
-        remainder = poly_add(g, poly_mult(f, h))
+    # multiple_left_shift(b, deg_dif) # take b to qb
 
-        mat.append(remainder)
+    return quot
 
-    m = [0] * len(mat)  # create symbols to express the polynomials by
-    n = [0] * len(mat_mult)
 
-    for i in range(len(mat)):
-        m[i] = sympy.symbols('m_{0}'.format(i))
+def inverse(g, f):
+    """ Calculates inverse of polynomial in algebraic extension
+    Note all polynomials have x^{n-1} in index 0
 
-    for i in range(len(mat_mult)):
-        n[i] = sympy.symbols('n_{0}'.format(i))
+    :param g: polynomial we want inverse of
+    :param f: quotient of ring
+    :return: inverse
+    """
+    f_zero = [0] * len(f)
+    t = list(f_zero)
+    new_t = [0] * (len(f) - 1)
+    new_t.append(1)
 
-    eq = m[len(m) - 1]
+    r, new_r = f, g
 
-    for i in range(len(n)):  # recursive algorithm for 1 in terms of f, g
-        eq = eq.replace(m[len(m) - 1 - i], m[len(m) - 2 - i] * n[len(n) - 1 - i] + m[len(m) - 3 - i])
+    while new_r != f_zero and new_r != f:
+        q = quotient(r, new_r)
+        r, new_r = new_r, poly_add(r, multiple_left_shift(new_r, q))
+        t, new_t = new_t, poly_add(t, multiple_left_shift(new_t, q))
 
-    expanded_expression = sympy.expand(eq)
+    return multiple_right_shift(t, lead_deg(r))
 
-    expanded_expression = sympy.collect(expanded_expression, (m[0], m[1]), func=sympy.factor)  # expanding (not sure if necessary)
+def max_power_two(n):
+    """ finds the supremum for value a where 2**a < n
 
-    str_inverse_g = str(sympy.collect(expanded_expression, m[1], evaluate=False)[m[1]])
+    :param n: number
+    :return: a
+    """
+    i = 0
+    if n == 2:
+        return 1
+    if n == 1:
+        return 0
+    while 2**i < n/2:
+        i += 1
+    return i
 
-    """parse str_inverse_g string"""
 
-    if '+' in str_inverse_g:
-        str_inverse_g = str_inverse_g.split(' + ')
+def number_to_binary(n, width):
+    """ takes a integer and expresses it as binary
+    in list form (highest power of 2 is on left)
 
-    x = []
-    for i in range(len(str_inverse_g)):  # outer array separated by addition, inner arrays separated by multiplication
-        if '*' in str_inverse_g[i]:
-            x.append(str_inverse_g[i].split('*'))
+    :param n: integer greater than 0
+    :param width: integer that sets the size of array
+    :return: array of binary expansion
+    """
+    binary = [0]*width
+    if (2**width-1) < n:
+        print("Width too small")
+        return
 
-        else:
-            x.append(str_inverse_g[i])
+    while n != 0:
+        power = max_power_two(n)
+        binary[width - power - 1] = 1
+        n = n - 2**power
 
-    x_int = [[0 for i in range(len(x[j]))] for j in range(len(x))]  # new array to store indices of n
+    return binary
 
-    for i in range(len(x)):  # store indices in new matrix/array x_int
-        for j in range(len(x[i])):
-            if not x[i][j] == '1':
-                turn_to_string = str(x[i][j])
-                x_int[i][j] = int(turn_to_string[2])
 
-            else:
-                x_int[i][j] = -1  # indicator for value 1
+def tuple_to_number(tuple):
+    """Converts binary to decimal number,
 
-    add_mat = [0 for i in range(len(x_int))]  # set up matrix where each element is product of polynomials as separated
+    :param tuple: n-tuple
+    :return: integer
+    """
+    binary = 0
+    for i in range(len(tuple)):
+        binary += tuple[i]*2**(len(tuple) - 1 - i)
+    return binary
 
-    for i in range(len(x_int)):
-        if not x_int[i][0] == -1:
-            add_mat[i] = mat_mult[x_int[i][0]]
-            for j in range(1, len(x_int[i])):
-                add_mat[i] = poly_mult(add_mat[i], mat_mult[x_int[i][j]])
 
-        else:  # turn -1 into 1 as polynomial
-            add_mat[i] = [0 for s in range(len(f) - 1)]
-            add_mat[i].append(1)
+def random_starting_tuple(length):
+    """ Randomly generates a tuple of given length
 
-    inverse_g = [0 for s in range(len(f))]
+    :param length: integer
+    :return: tuple
+    """
+    rand = random.randint(1, 2**length - 1)
+    start = number_to_binary(rand, length)
+    return start
 
-    for i in range(len(add_mat)):  # add each element to get inverse of given function
-        inverse_g = poly_add(inverse_g, add_mat[i])
 
-    return inverse_g
+def ducci_mult_twobases(u, v, a, b):
+    """Multiplies D^a(u) and D^b(v)
+
+    :param u: n-tuple
+    :param v: n-tuple
+    :param a: integer mod period
+    :param b: integer mod period
+    :return: Product as n-tuple
+    """
+    u_func, v_func = list(u), list(v)
+    x, y = repducci(a, u_func), repducci(b, v_func)
+    return poly_mult(x,y)
+
+
+def ducci_power_correction(D_a, u, b):
+    """Takes a'th (unknown a) ducci iteration of u and
+    gives the ab'th ducci iteration of u
+
+    :param D_a: n-tuple
+    :param u: starting n-tuple
+    :param b: power
+    :return: D^ab(u) as n-tuple
+    """
+    quot = [1]*len(u)   # initialise quotient of group
+    D_ab_ub = poly_power(b, D_a)
+
+    u_b1 = list(u)  # set up original polynomial u^(b-1) to be inverted
+    u_b1 = poly_power(b-1, u_b1)
+    u_b1 = inverse(u_b1, quot)
+
+    D_ab = poly_mult(D_ab_ub, u_b1)
+
+    return D_ab
+
+
+def replace_base_power(D_a, u, b, msg):
+    """Compute D^{ab}(msg) from D^a(u) and b
+
+    :param D_a: a iterations of u
+    :param u: starting tuple
+    :param b: integer
+    :param msg: message as tuple
+    :return: D^{ab}(msg)
+    """
+    D_ab_m, quot = list(D_a), [1] * len(u)
+    D_ab_m = poly_power(b, D_a)
+    u_b = poly_power(b, u)
+    u_b = inverse(u_b, quot)
+    D_ab_m = multiple_poly_mult(D_ab_m, u_b, msg)
+    return D_ab_m
+
+
+def multiple_poly_mult(*arg):
+    """ Multiplies each argument as polynomials
+
+    :param arg: series of tuples
+    :return: product of tuples as n-tuple
+    """
+    prod = [0]*(len(arg[0]) - 1)    # initialise 1 as tuple
+    prod.append(1)
+
+    for i in range(len(arg)):
+        prod = poly_mult(arg[i], prod)
+    return prod
+
+
+def get_msg_tuple(tuple):
+    """Checks if message length is same as base
+
+    :param tuple: array
+    :return: message
+    """
+    n = len(tuple)
+    message = [int(x) for x in input("Input message: n-tuple: ").split()]
+
+    while n != len(message):
+        message = [int(x) for x in input("Wrong length. "
+                                         "\nInput message: n-tuple: ").split()]
+
+    return message
+
+
+def get_msg_len(n):
+    """Checks if message length is same as n
+
+    :param tuple: array
+    :return: message
+    """
+    message = [int(x) for x in input("Input message: n-tuple: ").split()]
+
+    while n != len(message):
+        message = [int(x) for x in input("Wrong length. "
+                                         "\nInput message: n-tuple: ").split()]
+
+    return message
