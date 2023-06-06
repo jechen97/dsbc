@@ -3,7 +3,7 @@ Ducci sequences based cryptosystem
 
 This is my attempt at a cryptosystem based on Ducci sequences (or n-number game/Diffy game). Based from the ElGamal and Cramer-Schoup public key cryptosystems. 
 
-This is being built for my mathematics honours project.
+This was built for my Mathematics honours project.
 
 Sorry if there are bad practices/poor computational efficiency, let me know how I can improve. Thanks!
 
